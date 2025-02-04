@@ -22,7 +22,7 @@ class AdminMiddleware
             return redirect()->route('login');
         }
         
-        if (!$user->isSuper() || !$user->isAdmin()) {
+        if (!$user->isSuper() && !$user->isAdmin()) {
             return redirect()->route('home');
         }
         

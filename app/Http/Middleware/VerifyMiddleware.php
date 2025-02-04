@@ -22,7 +22,7 @@ class VerifyMiddleware
         }
 
         if(!$user->hasVerifiedEmail()){
-            return redirect()->route('auth.verify-email');
+            return redirect()->route('verification');
         }
 
         return $next($request);

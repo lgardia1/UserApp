@@ -3,14 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Middleware\VerifyMiddleware;
 
 class HomeController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth')->except('index');
-        $this->middleware(VerifyMiddleware::class)->except('index');
     }
 
     public function home()

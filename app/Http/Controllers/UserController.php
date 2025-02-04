@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\VerifyMiddleware;
 
 class UserController extends Controller
 {
@@ -13,48 +14,60 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware(AdminMiddleware::class);
+        $this->middleware(VerifyMiddleware::class);
     }
 
     public function index()
     {
-        if (Auth::user()->isAdmin()) {
-            $users = User::where('id', '<>', '1')->orderBy('id')->get();
+        if (!Auth::user()->isSuper()) {
+            $users = User::where('id', '<>', '1')->orderBy('id')->paginate(12);
+        }else {
+            $users = User::orderBy('id')->paginate(12);
         }
-        return view('user.index', ['users' => $users]);
+   
+        return view('admin.user.index', ['users' => $users]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user) 
     {
-        if(Auth::user()->isAdmin() && $user->isSuper()) {
-            return redirect()->route('user.index');
+        if ($user->isSuper()) {
+            return response()->json(['error' => 'Acción no permitida'], 403);
         }
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:user,admin',
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255|min:2',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'role' => 'sometimes|in:user,admin',
         ]);
-        
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->role = $request->role;
 
-        $user->save();
-
-
-        return redirect()->route('user.index')->with('success', 'Usuario actualizado con éxito');
+        try {
+            // Verifica si hay datos para actualizar
+            if (empty($validated)) {
+                return response()->json(['error' => 'No se enviaron datos válidos para actualizar'], 400);
+            }
+    
+            // Actualiza el usuario
+            $user->update($request->all());
+    
+            return response()->json(['message' => 'Usuario actualizado correctamente', 'user' => $user], 200);
+        } catch (\Exception $error) {
+            return response()->json(["error" => "Error inesperado: " . $error->getMessage()], 500);
+        }
     }
 
-    public function delete(User $user){
+    public function destroy(User $user)
+    {
         try {
-            if(Auth::user()->isAdmin() && $user->isSuper()) {
-                return redirect()->route('user.index');
+            if ($user->isSuper()) {
+                return redirect()->route('users.index');
             }
             $user->delete();
-            return redirect()->route('user.index')->with('success', 'Se elimino el usuario exitosamenete');
-        }catch(\Exception $error) {
 
+            $page = request()->query('page', 1);
+
+            return redirect()->route('users.index', ['page' => $page])->with(['success' => 'Se elimino el usuario exitosamenete']);
+        } catch (\Exception $error) {
+            return redirect()->route('users.index')->with(['error' => 'No se ha podido eliminado el usuario: ' . $error]);
         }
-
     }
 }

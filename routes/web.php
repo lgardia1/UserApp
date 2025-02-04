@@ -15,10 +15,11 @@ Auth::routes(['verify' => true]);
 Route::get('/settings', [HomeController::class, 'settings'])->name('settings');
 Route::get('/verify', [HomeController::class, 'verification'])->name('verification');
 
-Route::put('/settings/user/{user}/name', [SettingsController::class, 'updateName'])->name('user.updateName');
-Route::put('/settings/user/{user}/password', [SettingsController::class, 'updatePassword'])->name('user.updatePassword');
+Route::prefix('/settings')->group(function () {
+    Route::put('/user/{user}/name', [SettingsController::class, 'updateName'])->name('user.updateName');
+    Route::put('/user/{user}/password', [SettingsController::class, 'updatePassword'])->name('user.updatePassword');
+});
 
-Route::resource('/user', UserController::class);
-
-Route::get('/super', [AdministradorController::class, 'indexSuper'])->name('super');
 Route::get('/admin', [AdministradorController::class, 'index'])->name('admin');
+Route::resource('/admin/users', UserController::class);
+
