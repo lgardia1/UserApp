@@ -25,17 +25,20 @@
         <h1 class="mb-4">Lista de Usuarios</h1>
 
         {{-- Mensajes de éxito o error --}}
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @elseif(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+        <div id="error-container">
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @elseif(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+        </div>
+
 
         <div class="card shadow-sm">
             <div class="card-header">
@@ -49,6 +52,7 @@
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Rol</th>
+                            <th>Verification</th>
                         </tr>
                     </thead>
                     <tbody id="table">
@@ -70,6 +74,14 @@
                                             </option>
                                         </select>
                                     </td>
+                                    <td class="text-center">
+                                        @if ($user->hasVerifiedEmail())
+                                                {{ $user->email_verified_at->format('M d Y') }}
+                                        @else
+                                           <button type="button" class="btn btn-success verfy-button" aria-label="Verify" data-name="verify">Verify</button>
+                                        @endif
+                                           
+                                    </td>
                                 </tr>
                             @else
                                 <tr>
@@ -80,12 +92,15 @@
                                     <td>
                                         {{ $user->email }}
                                     </td>
-                                    <td>
+                                    <td text-center>
                                         @if ($user->isSuper())
                                             super
                                         @else
                                             {{ $user->role }}
                                         @endif
+                                    </td>
+                                    <td class="text-center">
+                                         {{ $user->email_verified_at->format('M d Y') }}
                                     </td>
                                 </tr>
                             @endif
@@ -99,6 +114,7 @@
     <form method="POST" action="" id="formDelete">
         @csrf
         @method('DELETE')
+        <input type="hidden" value="{{ $users->currentPage(); }}" name="page">
     </form>
 
     <button type="button" class="btn btn-sm btn-danger d-none position-absolute z-5" id="btn-delete" data-bs-toggle="modal"

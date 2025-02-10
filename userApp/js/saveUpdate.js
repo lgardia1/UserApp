@@ -5,7 +5,6 @@ function sendUpdate(field) {
     const { name } = field.dataset;
     const value = field.tagName === "SELECT" ? field.value : field.textContent;
     const { userId } = field.closest('tr').dataset;
-    const showError = field.closest('td');
     const url = urlUpdate+userId;
     
    fetch(url, {
@@ -20,24 +19,22 @@ function sendUpdate(field) {
             })
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(response.status);
-            }
             return response.json();
         })
-        .then(({error}) => {
-            if (error) {
-                const error = document.createElement('p');
-                styles = {
-                    color: 'red',
-                    margin: '0',
-                    marginTop: '.5rem',
-                    fontSize: '.9rem'
-                }
-                Object.assign(error.style, styles);
-                showError.appendChild(error);
+        .then((data) => {
+            if (data.error) {
+                const error = document.createElement('div');
+                error.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">'+
+                                    `${data.error}`
+                                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+                                 '</div>';
 
-                setTimeout(error.remove(), 10000)
+                const errorContainer = document.getElementById('error-container');
+
+                errorContainer.appendChild(error);
+                setTimeout(error.remove(), 100000)
+            }else if(field.tagName === 'BUTTON'){
+                field.value = data.user.email_verified_at;
             }
         })
         .catch(error => {
@@ -65,7 +62,13 @@ document.querySelectorAll('.editable').forEach(field => {
 });
 
 document.querySelectorAll('.role-select').forEach(field => {
-    field.addEventListener('change', (event) => {
+    field.addEventListener('change', function (event) {
+        sendUpdate(event.target);
+    });
+})
+
+document.querySelectorAll('.verfy-button').forEach(button => {
+    button.addEventListener('click', function (event) {
         sendUpdate(event.target);
     });
 })
